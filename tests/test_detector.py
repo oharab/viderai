@@ -1,5 +1,6 @@
 """Tests for human detection functionality."""
 
+import logging
 import pytest
 import numpy as np
 from video_human_detector.detector import Region, Detection, HumanDetector, YOLODetector
@@ -37,6 +38,8 @@ def test_human_detector_initialization():
     detector = HumanDetector()
     assert detector.detector is not None
     assert isinstance(detector.detector, YOLODetector)
+    assert detector.logger is not None
+    assert isinstance(detector.logger, logging.Logger)
 
 
 def test_yolo_detector_initialization():

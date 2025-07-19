@@ -1,10 +1,12 @@
 """Human detection functionality using YOLO models."""
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable
 import cv2
 import numpy as np
+from tqdm import tqdm
 from ultralytics import YOLO
 
 
@@ -109,12 +111,14 @@ class HumanDetector:
             detector: Detector implementation to use. Defaults to YOLODetector.
         """
         self.detector = detector or YOLODetector()
+        self.logger = logging.getLogger(__name__)
     
     def analyze_video(
         self, 
         video_path: str, 
         region: Region, 
-        frame_skip: int = 1
+        frame_skip: int = 1,
+        progress_callback: Optional[Callable[[int, int], None]] = None
     ) -> List[TimeRange]:
         """Analyze video for human presence in specified region.
         
@@ -122,16 +126,23 @@ class HumanDetector:
             video_path: Path to video file
             region: Region of interest to monitor
             frame_skip: Process every Nth frame (1 = every frame)
+            progress_callback: Optional callback for progress updates (current_frame, total_frames)
             
         Returns:
             List of time ranges when humans were detected in region
         """
+        self.logger.info(f"Starting analysis of video: {video_path}")
+        
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             raise ValueError(f"Could not open video file: {video_path}")
         
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+        self.logger.info(f"Video properties: {frame_count} frames, {fps:.2f} fps, duration: {frame_count/fps:.2f}s")
+        self.logger.info(f"Region of interest: center=({region.center_x}, {region.center_y}), size={region.width}x{region.height}")
+        self.logger.info(f"Processing every {frame_skip} frame(s)")
         
         time_ranges = []
         current_range_start = None
@@ -143,6 +154,10 @@ class HumanDetector:
                 if not ret:
                     break
                 
+                # Update progress
+                if progress_callback:
+                    progress_callback(frame_number, frame_count)
+                
                 # Skip frames based on frame_skip parameter
                 if frame_number % frame_skip != 0:
                     frame_number += 1
@@ -151,7 +166,9 @@ class HumanDetector:
                 current_time = frame_number / fps
                 
                 # Detect humans in current frame
+                self.logger.debug(f"Processing frame {frame_number} at time {current_time:.2f}s")
                 detections = self.detector.detect_humans(frame)
+                self.logger.debug(f"Found {len(detections)} human detections")
                 
                 # Check if any detection overlaps with region
                 human_in_region = any(
@@ -162,9 +179,11 @@ class HumanDetector:
                 if human_in_region:
                     if current_range_start is None:
                         current_range_start = current_time
+                        self.logger.info(f"Human detected in region starting at {current_time:.2f}s")
                 else:
                     if current_range_start is not None:
                         time_ranges.append(TimeRange(current_range_start, current_time))
+                        self.logger.info(f"Human left region at {current_time:.2f}s (duration: {current_time - current_range_start:.2f}s)")
                         current_range_start = None
                 
                 frame_number += 1
@@ -173,6 +192,9 @@ class HumanDetector:
             if current_range_start is not None:
                 final_time = frame_count / fps
                 time_ranges.append(TimeRange(current_range_start, final_time))
+                self.logger.info(f"Video ended with human still in region (final duration: {final_time - current_range_start:.2f}s)")
+            
+            self.logger.info(f"Analysis complete. Found {len(time_ranges)} time range(s) with human presence")
         
         finally:
             cap.release()

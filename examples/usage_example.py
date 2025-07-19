@@ -26,10 +26,16 @@ def main():
     video_path = "path/to/your/video.mp4"
     
     try:
+        # Progress callback for custom progress tracking
+        def progress_callback(current_frame: int, total_frames: int) -> None:
+            progress = (current_frame / total_frames) * 100
+            print(f"Progress: {progress:.1f}% ({current_frame}/{total_frames})")
+        
         time_ranges = detector.analyze_video(
             video_path=video_path,
             region=region,
-            frame_skip=5  # Process every 5th frame for speed
+            frame_skip=5,  # Process every 5th frame for speed
+            progress_callback=progress_callback  # Custom progress tracking
         )
         
         if time_ranges:
