@@ -1,7 +1,7 @@
 [project]
-name = "video-human-detector"
+name = "viderai"
 version = "0.1.0"
-description = "CCTV video analysis tool for detecting humans in specified regions"
+description = "AI-powered video analysis tool for detecting humans in specified regions"
 readme = "README.md"
 authors = [
     { name = "oharab", email = "64716+oharab@users.noreply.github.com" }
@@ -25,7 +25,7 @@ build = [
 ]
 
 [project.scripts]
-video-human-detector = "video_human_detector:main"
+viderai = "viderai:main"
 
 [build-system]
 requires = ["hatchling"]

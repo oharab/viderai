@@ -25,7 +25,7 @@ def run_command(cmd, check=True):
 
 def main():
     """Main build process."""
-    print("Building Windows executable for video-human-detector...")
+    print("Building Windows executable for Viderai...")
     
     # Ensure we're in the project root
     project_root = Path(__file__).parent
@@ -57,7 +57,7 @@ def main():
         print("YOLO model file not found. This will be downloaded on first run.")
     
     # Build the executable
-    spec_file = project_root / "video-human-detector.spec"
+    spec_file = project_root / "viderai.spec"
     
     print("Building executable with PyInstaller...")
     run_command([
@@ -67,7 +67,7 @@ def main():
     ])
     
     # Check if build was successful
-    exe_path = dist_dir / "video-human-detector.exe"
+    exe_path = dist_dir / "viderai.exe"
     if exe_path.exists():
         print(f"\n✓ Build successful!")
         print(f"Executable created at: {exe_path}")

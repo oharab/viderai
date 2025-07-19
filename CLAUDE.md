@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a CCTV video analysis tool for detecting humans in specified rectangular regions using YOLO models. The project uses uv for dependency management and follows a defensive security approach - it's designed for legitimate security analysis and surveillance applications only.
+Viderai is an AI-powered video analysis tool for detecting humans in specified rectangular regions using YOLO models. The project uses uv for dependency management and follows a defensive security approach - it's designed for legitimate security analysis and surveillance applications only.
 
 ## Essential Commands
 
@@ -14,19 +14,19 @@ This is a CCTV video analysis tool for detecting humans in specified rectangular
 uv sync --extra dev
 
 # Run the CLI tool with manual region specification
-uv run video-human-detector VIDEO_PATH --center-x X --center-y Y --width W --height H
+uv run viderai VIDEO_PATH --center-x X --center-y Y --width W --height H
 
 # Run with interactive region selection
-uv run video-human-detector VIDEO_PATH --interactive
+uv run viderai VIDEO_PATH --interactive
 
 # Run with frame capture for extended detections (NEW FEATURE)
-uv run video-human-detector VIDEO_PATH --interactive --capture-frames --min-duration 10.0 --output-dir surveillance_frames
+uv run viderai VIDEO_PATH --interactive --capture-frames --min-duration 10.0 --output-dir surveillance_frames
 
 # Run with verbose logging
-uv run video-human-detector VIDEO_PATH --center-x X --center-y Y --width W --height H --verbose
+uv run viderai VIDEO_PATH --center-x X --center-y Y --width W --height H --verbose
 
 # Run in quiet mode (for scripting)
-uv run video-human-detector VIDEO_PATH --center-x X --center-y Y --width W --height H --quiet --output-format json
+uv run viderai VIDEO_PATH --center-x X --center-y Y --width W --height H --quiet --output-format json
 ```
 
 ### Testing
@@ -38,7 +38,7 @@ uv run pytest
 uv run pytest tests/test_detector.py
 
 # Run with coverage
-uv run pytest --cov=video_human_detector
+uv run pytest --cov=viderai
 ```
 
 ### Windows Packaging
@@ -50,10 +50,10 @@ To create a standalone Windows executable that doesn't require Python installati
 uv sync --extra build
 
 # Create Windows executable using PyInstaller
-uv run pyinstaller video-human-detector.spec
+uv run pyinstaller viderai.spec
 
-# The executable will be created in dist/video-human-detector/
-# Copy the entire dist/video-human-detector/ directory to Windows machines
+# The executable will be created in dist/
+# Copy the entire dist/ directory to Windows machines
 ```
 
 **Alternative build script:**
@@ -63,12 +63,10 @@ python build_windows.py
 ```
 
 **Package Contents:**
-- `dist/video-human-detector.exe` - Standalone Windows executable (single file)
-- OR `dist/video-human-detector/` - Directory distribution with executable and dependencies
+- `dist/viderai.exe` - Standalone Windows executable (single file)
 
 **Distribution:**
-- Single file: Copy `video-human-detector.exe` to target Windows machines
-- Directory: Copy the entire `dist/video-human-detector/` directory to Windows machines  
+- Single file: Copy `viderai.exe` to target Windows machines
 - No Python installation required on target machines
 - Executable size: ~100-200MB (includes PyTorch and OpenCV dependencies)
 

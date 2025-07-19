@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-from video_human_detector.detector import HumanDetector, YOLODetector, Region, TimeRange
+from viderai.detector import HumanDetector, YOLODetector, Region, TimeRange
 
 
 @pytest.fixture

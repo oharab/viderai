@@ -3,8 +3,8 @@
 import numpy as np
 import pytest
 from unittest.mock import Mock, patch
-from video_human_detector.region_selector import InteractiveRegionSelector
-from video_human_detector.detector import Region
+from viderai.region_selector import InteractiveRegionSelector
+from viderai.detector import Region
 
 
 @pytest.fixture
@@ -85,7 +85,7 @@ def test_instruction_panel_creation(sample_frame):
 @patch('cv2.VideoCapture')
 def test_select_region_interactively_video_error(mock_video_capture):
     """Test error handling for video file issues."""
-    from video_human_detector.region_selector import select_region_interactively
+    from viderai.region_selector import select_region_interactively
     
     # Test video file can't be opened
     mock_cap = Mock()
@@ -99,7 +99,7 @@ def test_select_region_interactively_video_error(mock_video_capture):
 @patch('cv2.VideoCapture')
 def test_select_region_interactively_frame_error(mock_video_capture):
     """Test error handling for frame reading issues."""
-    from video_human_detector.region_selector import select_region_interactively
+    from viderai.region_selector import select_region_interactively
     
     # Test video file opens but can't read first frame
     mock_cap = Mock()

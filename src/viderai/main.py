@@ -21,6 +21,6 @@ if __name__ == "__main__":
             from cli import main
         except ImportError:
             # Try package import
-            from video_human_detector.cli import main
+            from viderai.cli import main
     
     main()
