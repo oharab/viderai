@@ -54,14 +54,86 @@ class InteractiveRegionSelector:
         self.region.center_x = max(half_width, min(self.region.center_x, self.width - half_width))
         self.region.center_y = max(half_height, min(self.region.center_y, self.height - half_height))
     
+    def _create_instruction_panel(self) -> np.ndarray:
+        """Create a side panel with instructions and region info."""
+        panel_width = 300
+        panel_height = self.height
+        
+        # Create dark panel
+        panel = np.zeros((panel_height, panel_width, 3), dtype=np.uint8)
+        panel[:] = (40, 40, 40)  # Dark gray background
+        
+        # Instructions and info
+        instructions = [
+            "INTERACTIVE REGION SELECTOR",
+            "",
+            "MOVEMENT:",
+            "↑↓←→  Move region",
+            "",
+            "RESIZE BOTH:",
+            "Z     Both smaller",
+            "X     Both larger", 
+            "",
+            "RESIZE WIDTH ONLY:",
+            "M     Narrower",
+            "N     Wider",
+            "",
+            "RESIZE HEIGHT ONLY:",
+            "H     Shorter",
+            "J     Taller",
+            "",
+            "ACTIONS:",
+            "Enter Confirm selection",
+            "Esc   Cancel & exit",
+            "Q     Quit",
+            "",
+            "CURRENT REGION:",
+            f"Center: ({self.region.center_x}, {self.region.center_y})",
+            f"Size: {self.region.width} × {self.region.height}",
+            f"Area: {self.region.width * self.region.height} pixels"
+        ]
+        
+        y_pos = 25
+        for instruction in instructions:
+            if instruction == "":
+                y_pos += 15
+                continue
+                
+            # Different colors for different sections
+            if instruction.startswith("INTERACTIVE") or instruction.endswith(":"):
+                color = (100, 255, 100)  # Bright green for headers
+                font_scale = 0.5 if instruction.startswith("INTERACTIVE") else 0.45
+                thickness = 2 if instruction.startswith("INTERACTIVE") else 1
+            elif instruction.startswith(("↑", "Z", "X", "M", "N", "H", "J", "Enter", "Esc", "Q")):
+                color = (255, 255, 100)  # Yellow for controls
+                font_scale = 0.4
+                thickness = 1
+            else:
+                color = (200, 200, 200)  # Light gray for descriptions
+                font_scale = 0.4
+                thickness = 1
+            
+            cv2.putText(
+                panel,
+                instruction,
+                (10, y_pos),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                font_scale,
+                color,
+                thickness
+            )
+            y_pos += 20
+        
+        return panel
+    
     def _draw_region(self) -> np.ndarray:
-        """Draw the region overlay on the frame."""
+        """Draw the region overlay on the frame with side panel."""
         # Start with original frame
-        display_frame = self.original_frame.copy()
+        video_frame = self.original_frame.copy()
         
         # Draw rectangle
         cv2.rectangle(
-            display_frame,
+            video_frame,
             (self.region.x1, self.region.y1),
             (self.region.x2, self.region.y2),
             self.region_color,
@@ -70,47 +142,38 @@ class InteractiveRegionSelector:
         
         # Draw center point
         cv2.circle(
-            display_frame,
+            video_frame,
             (self.region.center_x, self.region.center_y),
             4,
             self.region_color,
             -1
         )
         
-        # Draw instructions
-        instructions = [
-            "Arrow Keys: Move region",
-            "Z/X: Resize both smaller/larger",
-            "M/N: Width narrower/wider",
-            "H/J: Height shorter/taller", 
-            "Enter: Confirm",
-            "Esc: Cancel",
-            f"Region: ({self.region.center_x}, {self.region.center_y}) {self.region.width}x{self.region.height}"
+        # Add corner markers for better visibility
+        corner_size = 8
+        corners = [
+            (self.region.x1, self.region.y1),  # Top-left
+            (self.region.x2, self.region.y1),  # Top-right
+            (self.region.x1, self.region.y2),  # Bottom-left
+            (self.region.x2, self.region.y2),  # Bottom-right
         ]
         
-        y_offset = 30
-        for i, instruction in enumerate(instructions):
-            # Add text background
-            text_size = cv2.getTextSize(instruction, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)[0]
+        for corner in corners:
             cv2.rectangle(
-                display_frame,
-                (10, y_offset + i * 25 - 20),
-                (20 + text_size[0], y_offset + i * 25 + 5),
-                self.text_bg_color,
+                video_frame,
+                (corner[0] - corner_size//2, corner[1] - corner_size//2),
+                (corner[0] + corner_size//2, corner[1] + corner_size//2),
+                self.region_color,
                 -1
             )
-            # Add text
-            cv2.putText(
-                display_frame,
-                instruction,
-                (15, y_offset + i * 25),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                self.text_color,
-                1
-            )
         
-        return display_frame
+        # Create instruction panel
+        instruction_panel = self._create_instruction_panel()
+        
+        # Combine video frame and instruction panel horizontally
+        combined_frame = np.hstack((video_frame, instruction_panel))
+        
+        return combined_frame
     
     def select_region(self, window_name: str = "Select Region") -> Optional[Region]:
         """Interactive region selection.
