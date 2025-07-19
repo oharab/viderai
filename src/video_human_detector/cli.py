@@ -9,14 +9,16 @@ from pathlib import Path
 from tqdm import tqdm
 
 from .detector import HumanDetector, YOLODetector, Region
+from .region_selector import select_region_interactively
 
 
 @click.command()
 @click.argument('video_path', type=click.Path(exists=True, path_type=Path))
-@click.option('--center-x', type=int, required=True, help='X coordinate of region center')
-@click.option('--center-y', type=int, required=True, help='Y coordinate of region center')
-@click.option('--width', type=int, required=True, help='Width of region in pixels')
-@click.option('--height', type=int, required=True, help='Height of region in pixels')
+@click.option('--center-x', type=int, help='X coordinate of region center')
+@click.option('--center-y', type=int, help='Y coordinate of region center')
+@click.option('--width', type=int, help='Width of region in pixels')
+@click.option('--height', type=int, help='Height of region in pixels')
+@click.option('--interactive', '-i', is_flag=True, help='Interactive region selection mode')
 @click.option('--frame-skip', type=int, default=1, help='Process every Nth frame (default: 1)')
 @click.option('--confidence', type=float, default=0.5, help='Detection confidence threshold (default: 0.5)')
 @click.option('--model', type=str, default='yolov8n.pt', help='YOLO model to use (default: yolov8n.pt)')
@@ -25,10 +27,11 @@ from .detector import HumanDetector, YOLODetector, Region
 @click.option('--quiet', '-q', is_flag=True, help='Suppress progress bar (useful for scripting)')
 def main(
     video_path: Path,
-    center_x: int,
-    center_y: int,
-    width: int,
-    height: int,
+    center_x: Optional[int],
+    center_y: Optional[int],
+    width: Optional[int],
+    height: Optional[int],
+    interactive: bool,
     frame_skip: int,
     confidence: float,
     model: str,
@@ -39,13 +42,39 @@ def main(
     """Detect humans in a specified region of a video file.
     
     VIDEO_PATH: Path to the video file to analyze
+    
+    You can specify the region either:
+    1. Using --center-x, --center-y, --width, --height options
+    2. Using --interactive/-i for visual region selection
     """
     try:
         # Configure logging
         setup_logging(verbose)
         
-        # Create region of interest
-        region = Region(center_x, center_y, width, height)
+        # Determine region selection method
+        if interactive:
+            if not quiet:
+                click.echo("Starting interactive region selection...")
+                click.echo("Controls: Arrow keys (move), Z/X (resize), Enter (confirm), Esc (cancel)")
+            
+            # Use interactive selection
+            initial_region = None
+            if all(param is not None for param in [center_x, center_y, width, height]):
+                initial_region = Region(center_x, center_y, width, height)
+            
+            region = select_region_interactively(str(video_path), initial_region)
+            if region is None:
+                click.echo("Region selection cancelled.")
+                return
+                
+        else:
+            # Validate manual region parameters
+            if any(param is None for param in [center_x, center_y, width, height]):
+                click.echo("Error: Must specify either --interactive or all of --center-x, --center-y, --width, --height", err=True)
+                raise click.Abort()
+            
+            # Create region from manual parameters
+            region = Region(center_x, center_y, width, height)
         
         # Initialize detector
         yolo_detector = YOLODetector(model, confidence)
@@ -54,7 +83,7 @@ def main(
         # Show initial info (unless quiet and json output)
         if not (quiet and output_format == 'json'):
             click.echo(f"Analyzing video: {video_path}")
-            click.echo(f"Region: center=({center_x}, {center_y}), size={width}x{height}")
+            click.echo(f"Region: center=({region.center_x}, {region.center_y}), size={region.width}x{region.height}")
             click.echo(f"Frame skip: {frame_skip}, Confidence: {confidence}")
         
         # Set up progress tracking
@@ -86,10 +115,10 @@ def main(
             output = {
                 'video_path': str(video_path),
                 'region': {
-                    'center_x': center_x,
-                    'center_y': center_y,
-                    'width': width,
-                    'height': height
+                    'center_x': region.center_x,
+                    'center_y': region.center_y,
+                    'width': region.width,
+                    'height': region.height
                 },
                 'time_ranges': [
                     {'start': tr.start_time, 'end': tr.end_time}

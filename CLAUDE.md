@@ -13,8 +13,11 @@ This is a CCTV video analysis tool for detecting humans in specified rectangular
 # Install dependencies (including dev dependencies for testing)
 uv sync --extra dev
 
-# Run the CLI tool
+# Run the CLI tool with manual region specification
 uv run video-human-detector VIDEO_PATH --center-x X --center-y Y --width W --height H
+
+# Run with interactive region selection (NEW FEATURE)
+uv run video-human-detector VIDEO_PATH --interactive
 
 # Run with verbose logging
 uv run video-human-detector VIDEO_PATH --center-x X --center-y Y --width W --height H --verbose
@@ -54,6 +57,13 @@ uv run pytest --cov=video_human_detector
 - Regions defined by center point (x, y) + dimensions (width, height)
 - Auto-calculates bounding box coordinates (x1, y1, x2, y2)
 - Detection.overlaps_with_region() determines if human detection intersects with monitored area
+- **InteractiveRegionSelector**: Visual region selection using OpenCV with keyboard controls
+
+**Interactive Region Selection**
+- Displays first frame of video with overlay showing current region
+- Controls: Arrow keys (move), Z/X keys (resize), Enter (confirm), Esc (cancel)
+- Supports starting with predefined region or default center placement
+- Real-time visual feedback with region coordinates and size display
 
 ### Data Flow
 1. Video frames → DetectorBase.detect_humans() → List[Detection]
@@ -78,6 +88,7 @@ uv run pytest --cov=video_human_detector
 - **Confidence Threshold**: YOLO detection confidence (CLI: `--confidence`, API: YOLODetector constructor)
 - **YOLO Model**: Different model sizes available (nano/small/medium/large via `--model` or YOLODetector constructor)
 - **Output Format**: Human-readable or JSON (CLI: `--output-format`)
+- **Interactive Mode**: Visual region selection (CLI: `--interactive/-i`)
 
 ## Extension Points
 
