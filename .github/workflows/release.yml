@@ -226,7 +226,20 @@ jobs:
               hookspath=[],
               hooksconfig={},
               runtime_hooks=[],
-              excludes=[],
+              excludes=[
+                  'tensorflow',
+                  'torch.distributed',
+                  'torch.utils.tensorboard',
+                  'matplotlib',
+                  'PIL.ImageQt',
+                  'PyQt5',
+                  'PyQt6',
+                  'tkinter',
+                  'scipy.spatial.cKDTree',
+                  'scipy.linalg.cython_blas',
+                  'scipy.linalg.cython_lapack',
+                  'scipy.special.cython_special'
+              ],
               win_no_prefer_redirects=False,
               win_private_assemblies=False,
               cipher=block_cipher,
@@ -303,6 +316,15 @@ jobs:
           
           # Create tar.gz file
           tar -czf viderai-linux.tar.gz -C viderai-linux .
+          
+          # Check file size (GitHub limit is 2GB)
+          file_size=$(stat -c%s viderai-linux.tar.gz)
+          max_size=$((2147483648)) # 2GB in bytes
+          echo "Linux package size: $(( file_size / 1024 / 1024 ))MB"
+          if [ $file_size -gt $max_size ]; then
+            echo "Error: Package size exceeds GitHub 2GB limit"
+            exit 1
+          fi
 
       - name: Upload Linux Release Asset
         run: |
@@ -351,7 +373,20 @@ jobs:
               hookspath=[],
               hooksconfig={},
               runtime_hooks=[],
-              excludes=[],
+              excludes=[
+                  'tensorflow',
+                  'torch.distributed',
+                  'torch.utils.tensorboard',
+                  'matplotlib',
+                  'PIL.ImageQt',
+                  'PyQt5',
+                  'PyQt6',
+                  'tkinter',
+                  'scipy.spatial.cKDTree',
+                  'scipy.linalg.cython_blas',
+                  'scipy.linalg.cython_lapack',
+                  'scipy.special.cython_special'
+              ],
               win_no_prefer_redirects=False,
               win_private_assemblies=False,
               cipher=block_cipher,
@@ -433,6 +468,15 @@ jobs:
           
           # Create tar.gz file
           tar -czf viderai-macos.tar.gz -C viderai-macos .
+          
+          # Check file size (GitHub limit is 2GB)
+          file_size=$(stat -f%z viderai-macos.tar.gz)
+          max_size=$((2147483648)) # 2GB in bytes
+          echo "macOS package size: $(( file_size / 1024 / 1024 ))MB"
+          if [ $file_size -gt $max_size ]; then
+            echo "Error: Package size exceeds GitHub 2GB limit"
+            exit 1
+          fi
 
       - name: Upload macOS Release Asset
         run: |
