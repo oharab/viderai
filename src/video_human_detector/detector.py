@@ -1,8 +1,10 @@
 """Human detection functionality using YOLO models."""
 
 import logging
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Tuple, Optional, Callable
 import cv2
 import numpy as np
@@ -55,6 +57,12 @@ class TimeRange:
     """Represents a time range when humans were detected."""
     start_time: float
     end_time: float
+    captured_frame_path: Optional[str] = None
+    
+    @property
+    def duration(self) -> float:
+        """Get the duration of this time range in seconds."""
+        return self.end_time - self.start_time
 
 
 class DetectorBase(ABC):
@@ -118,7 +126,10 @@ class HumanDetector:
         video_path: str, 
         region: Region, 
         frame_skip: int = 1,
-        progress_callback: Optional[Callable[[int, int], None]] = None
+        progress_callback: Optional[Callable[[int, int], None]] = None,
+        capture_frames: bool = False,
+        min_duration_for_capture: float = 5.0,
+        output_dir: Optional[str] = None
     ) -> List[TimeRange]:
         """Analyze video for human presence in specified region.
         
@@ -127,6 +138,9 @@ class HumanDetector:
             region: Region of interest to monitor
             frame_skip: Process every Nth frame (1 = every frame)
             progress_callback: Optional callback for progress updates (current_frame, total_frames)
+            capture_frames: Whether to save frames when humans detected for extended periods
+            min_duration_for_capture: Minimum duration (seconds) before capturing frames
+            output_dir: Directory to save captured frames (defaults to 'captures')
             
         Returns:
             List of time ranges when humans were detected in region
@@ -144,8 +158,16 @@ class HumanDetector:
         self.logger.info(f"Region of interest: center=({region.center_x}, {region.center_y}), size={region.width}x{region.height}")
         self.logger.info(f"Processing every {frame_skip} frame(s)")
         
+        # Set up frame capture if enabled
+        if capture_frames:
+            if output_dir is None:
+                output_dir = "captures"
+            os.makedirs(output_dir, exist_ok=True)
+            self.logger.info(f"Frame capture enabled: min duration {min_duration_for_capture}s, output dir: {output_dir}")
+        
         time_ranges = []
         current_range_start = None
+        current_range_frames = []  # Store frames for potential capture
         frame_number = 0
         
         try:
@@ -179,20 +201,54 @@ class HumanDetector:
                 if human_in_region:
                     if current_range_start is None:
                         current_range_start = current_time
+                        current_range_frames = []  # Reset frame storage
                         self.logger.info(f"Human detected in region starting at {current_time:.2f}s")
+                    
+                    # Store frame for potential capture
+                    if capture_frames:
+                        current_range_frames.append((frame.copy(), current_time, frame_number))
+                
                 else:
                     if current_range_start is not None:
-                        time_ranges.append(TimeRange(current_range_start, current_time))
-                        self.logger.info(f"Human left region at {current_time:.2f}s (duration: {current_time - current_range_start:.2f}s)")
+                        duration = current_time - current_range_start
+                        captured_frame_path = None
+                        
+                        # Capture frame if duration exceeds threshold
+                        if capture_frames and duration >= min_duration_for_capture and current_range_frames:
+                            captured_frame_path = self._save_captured_frame(
+                                current_range_frames, video_path, current_range_start, 
+                                duration, output_dir, region
+                            )
+                        
+                        time_range = TimeRange(current_range_start, current_time, captured_frame_path)
+                        time_ranges.append(time_range)
+                        self.logger.info(f"Human left region at {current_time:.2f}s (duration: {duration:.2f}s)")
+                        if captured_frame_path:
+                            self.logger.info(f"Captured frame saved: {captured_frame_path}")
+                        
                         current_range_start = None
+                        current_range_frames = []
                 
                 frame_number += 1
             
             # Handle case where video ends while human is still in region
             if current_range_start is not None:
                 final_time = frame_count / fps
-                time_ranges.append(TimeRange(current_range_start, final_time))
-                self.logger.info(f"Video ended with human still in region (final duration: {final_time - current_range_start:.2f}s)")
+                duration = final_time - current_range_start
+                captured_frame_path = None
+                
+                # Capture frame if duration exceeds threshold
+                if capture_frames and duration >= min_duration_for_capture and current_range_frames:
+                    captured_frame_path = self._save_captured_frame(
+                        current_range_frames, video_path, current_range_start, 
+                        duration, output_dir, region
+                    )
+                
+                time_range = TimeRange(current_range_start, final_time, captured_frame_path)
+                time_ranges.append(time_range)
+                self.logger.info(f"Video ended with human still in region (final duration: {duration:.2f}s)")
+                if captured_frame_path:
+                    self.logger.info(f"Captured frame saved: {captured_frame_path}")
             
             self.logger.info(f"Analysis complete. Found {len(time_ranges)} time range(s) with human presence")
         
@@ -200,3 +256,112 @@ class HumanDetector:
             cap.release()
         
         return time_ranges
+    
+    def _save_captured_frame(
+        self,
+        frame_data: List[Tuple[np.ndarray, float, int]],
+        video_path: str,
+        start_time: float,
+        duration: float,
+        output_dir: str,
+        region: Region
+    ) -> str:
+        """Save a representative frame from a detection range.
+        
+        Args:
+            frame_data: List of (frame, timestamp, frame_number) tuples
+            video_path: Original video path for filename generation
+            start_time: Start time of detection range
+            duration: Duration of detection range
+            output_dir: Output directory for saved frames
+            region: Region of interest for annotation
+            
+        Returns:
+            Path to saved frame file
+        """
+        if not frame_data:
+            return None
+        
+        # Select frame from middle of the range for best representation
+        middle_idx = len(frame_data) // 2
+        frame, timestamp, frame_number = frame_data[middle_idx]
+        
+        # Create filename with video name, timestamp, and duration
+        video_name = Path(video_path).stem
+        filename = f"{video_name}_t{start_time:.1f}s_d{duration:.1f}s_f{frame_number}.jpg"
+        output_path = os.path.join(output_dir, filename)
+        
+        # Draw region overlay on the frame
+        annotated_frame = self._annotate_frame(frame, region, timestamp, duration)
+        
+        # Save the frame
+        cv2.imwrite(output_path, annotated_frame)
+        
+        return output_path
+    
+    def _annotate_frame(
+        self,
+        frame: np.ndarray,
+        region: Region,
+        timestamp: float,
+        duration: float
+    ) -> np.ndarray:
+        """Annotate frame with region overlay and detection info.
+        
+        Args:
+            frame: Original frame
+            region: Region of interest
+            timestamp: Time when frame was captured
+            duration: Duration of detection range
+            
+        Returns:
+            Annotated frame
+        """
+        annotated = frame.copy()
+        
+        # Draw region rectangle
+        cv2.rectangle(
+            annotated,
+            (region.x1, region.y1),
+            (region.x2, region.y2),
+            (0, 255, 0),  # Green
+            2
+        )
+        
+        # Add timestamp and duration text
+        info_text = f"Time: {timestamp:.1f}s | Duration: {duration:.1f}s"
+        
+        # Text background
+        text_size = cv2.getTextSize(info_text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
+        cv2.rectangle(
+            annotated,
+            (10, 10),
+            (20 + text_size[0], 40 + text_size[1]),
+            (0, 0, 0),  # Black background
+            -1
+        )
+        
+        # Add text
+        cv2.putText(
+            annotated,
+            info_text,
+            (15, 35),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 255),  # White text
+            2
+        )
+        
+        # Add region info
+        region_text = f"Region: ({region.center_x}, {region.center_y}) {region.width}x{region.height}"
+        cv2.putText(
+            annotated,
+            region_text,
+            (15, 65),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (255, 255, 255),  # White text
+            1
+        )
+        
+        return annotated

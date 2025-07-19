@@ -35,14 +35,20 @@ def main():
             video_path=video_path,
             region=region,
             frame_skip=5,  # Process every 5th frame for speed
-            progress_callback=progress_callback  # Custom progress tracking
+            progress_callback=progress_callback,  # Custom progress tracking
+            capture_frames=True,  # Enable frame capture (NEW FEATURE)
+            min_duration_for_capture=3.0,  # Capture frames for detections > 3 seconds
+            output_dir="my_captures"  # Custom output directory
         )
         
         if time_ranges:
             print(f"Human detected in region during {len(time_ranges)} time range(s):")
             for i, tr in enumerate(time_ranges, 1):
-                duration = tr.end_time - tr.start_time
-                print(f"  {i}. {tr.start_time:.2f}s - {tr.end_time:.2f}s (duration: {duration:.2f}s)")
+                duration = tr.duration
+                output_line = f"  {i}. {tr.start_time:.2f}s - {tr.end_time:.2f}s (duration: {duration:.2f}s)"
+                if tr.captured_frame_path:
+                    output_line += f" [Frame saved: {tr.captured_frame_path}]"
+                print(output_line)
         else:
             print("No humans detected in the specified region.")
             
