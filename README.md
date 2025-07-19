@@ -1,4 +1,4 @@
-# Viderai <¥>
+# Viderai ğŸ¥
 
 **AI-Powered Video Analysis for Human Detection**
 
@@ -8,18 +8,18 @@ Viderai is a modern, efficient tool for detecting human presence in specified re
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
-## ( Features
+## âœ¨ Features
 
-- **<¯ Precise Region Monitoring** - Define rectangular regions of interest with pixel-perfect accuracy
-- **=± Interactive Region Selection** - Visual point-and-click interface for easy region setup
-- **¡ Real-Time Performance** - Optimized YOLO detection with configurable frame skipping
-- **=ø Automated Frame Capture** - Save annotated frames when humans are detected for extended periods
-- **=' Flexible Configuration** - Adjustable confidence thresholds, models, and output formats
-- **=» Cross-Platform** - Works on Windows, macOS, and Linux
-- **=æ Standalone Executables** - No Python installation required on target machines
-- **=á Security-Focused** - Designed for legitimate surveillance and security applications
+- **ğŸ¯ Precise Region Monitoring** - Define rectangular regions of interest with pixel-perfect accuracy
+- **ğŸ–±ï¸ Interactive Region Selection** - Visual point-and-click interface for easy region setup
+- **âš¡ Real-Time Performance** - Optimized YOLO detection with configurable frame skipping
+- **ğŸ“¸ Automated Frame Capture** - Save annotated frames when humans are detected for extended periods
+- **âš™ï¸ Flexible Configuration** - Adjustable confidence thresholds, models, and output formats
+- **ğŸŒ Cross-Platform** - Works on Windows, macOS, and Linux
+- **ğŸ“¦ Standalone Executables** - No Python installation required on target machines
+- **ğŸ”’ Security-Focused** - Designed for legitimate surveillance and security applications
 
-## =€ Quick Start
+## ğŸš€ Quick Start
 
 ### Installation
 
@@ -50,7 +50,7 @@ uv run viderai video.mp4 --center-x 320 --center-y 240 --width 200 --height 150
 uv run viderai video.mp4 --interactive --capture-frames --min-duration 5.0
 ```
 
-## =Ö Documentation
+## ğŸ“š Documentation
 
 ### Command Line Interface
 
@@ -103,7 +103,7 @@ for tr in time_ranges:
         print(f"Frame saved: {tr.captured_frame_path}")
 ```
 
-## =¼ Interactive Region Selection
+## ğŸ–±ï¸ Interactive Region Selection
 
 Viderai features an intuitive visual interface for selecting monitoring regions:
 
@@ -116,7 +116,7 @@ Viderai features an intuitive visual interface for selecting monitoring regions:
   - Enter: Confirm selection
   - Esc: Cancel
 
-## =Ê Output Formats
+## ğŸ“Š Output Formats
 
 ### Human-Readable (Default)
 ```
@@ -137,7 +137,7 @@ Human detected in region during 2 time range(s):
 ]
 ```
 
-## <× Architecture
+## ğŸ—ï¸ Architecture
 
 Viderai is built with extensibility in mind:
 
@@ -149,7 +149,7 @@ Viderai is built with extensibility in mind:
 
 The modular design allows for easy integration of additional detection models (MediaPipe, OpenPose, etc.) while maintaining consistent APIs.
 
-## =' Advanced Configuration
+## âš™ï¸ Advanced Configuration
 
 ### Performance Optimization
 ```bash
@@ -172,7 +172,7 @@ uv run viderai video.mp4 --interactive --capture-frames --min-duration 10.0
 uv run viderai video.mp4 --interactive --capture-frames --output-dir surveillance_frames
 ```
 
-## =¥ Windows Deployment
+## ğŸªŸ Windows Deployment
 
 Create standalone executables for Windows deployment:
 
@@ -186,7 +186,7 @@ uv run pyinstaller viderai.spec
 # Result: dist/viderai.exe (standalone, no Python required)
 ```
 
-## >ê Testing
+## ğŸ§ª Testing
 
 ```bash
 # Install development dependencies
@@ -202,7 +202,7 @@ uv run pytest --cov=viderai
 uv run pytest tests/test_detector.py
 ```
 
-## > Contributing
+## ğŸ¤ Contributing
 
 We welcome contributions! Here's how to get started:
 
@@ -227,7 +227,7 @@ uv sync --extra dev
 uv run pre-commit install
 ```
 
-## =á Security & Ethics
+## ğŸ”’ Security & Ethics
 
 Viderai is designed exclusively for **legitimate security and surveillance applications**. Please ensure compliance with:
 
@@ -238,25 +238,25 @@ Viderai is designed exclusively for **legitimate security and surveillance appli
 
 **This tool should only be used for authorized security monitoring and research purposes.**
 
-## =Ë Requirements
+## ğŸ“‹ Requirements
 
 - **Python**: 3.13+ 
 - **Operating System**: Windows, macOS, Linux
 - **Dependencies**: OpenCV, Ultralytics YOLO, Click, NumPy
 - **Hardware**: GPU recommended for real-time processing
 
-## =Ä License
+## ğŸ“„ License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## =O Acknowledgments
+## ğŸ™ Acknowledgments
 
 - [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for object detection
 - [OpenCV](https://opencv.org/) for computer vision capabilities
 - [uv](https://github.com/astral-sh/uv) for fast Python package management
 - [Click](https://click.palletsprojects.com/) for the command-line interface
 
-## =Ş Support
+## ğŸ’¬ Support
 
 - **Issues**: [GitHub Issues](https://github.com/yourusername/viderai/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/viderai/discussions)
@@ -264,4 +264,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with d for the security and research community**
+**Made with â¤ï¸ for the security and research community**
