@@ -131,26 +131,29 @@ class InteractiveRegionSelector:
         # Start with original frame
         video_frame = self.original_frame.copy()
         
-        # Draw rectangle
+        # Create a translucent overlay for the region
+        overlay = video_frame.copy()
+        
+        # Draw rectangle with thinner line
         cv2.rectangle(
-            video_frame,
+            overlay,
             (self.region.x1, self.region.y1),
             (self.region.x2, self.region.y2),
             self.region_color,
-            2
+            1  # Thinner line (was 2)
         )
         
-        # Draw center point
+        # Draw smaller, more subtle center point
         cv2.circle(
-            video_frame,
+            overlay,
             (self.region.center_x, self.region.center_y),
-            4,
+            2,  # Smaller radius (was 4)
             self.region_color,
             -1
         )
         
-        # Add corner markers for better visibility
-        corner_size = 8
+        # Add smaller corner markers for better visibility
+        corner_size = 4  # Smaller corners (was 8)
         corners = [
             (self.region.x1, self.region.y1),  # Top-left
             (self.region.x2, self.region.y1),  # Top-right
@@ -160,12 +163,16 @@ class InteractiveRegionSelector:
         
         for corner in corners:
             cv2.rectangle(
-                video_frame,
+                overlay,
                 (corner[0] - corner_size//2, corner[1] - corner_size//2),
                 (corner[0] + corner_size//2, corner[1] + corner_size//2),
                 self.region_color,
                 -1
             )
+        
+        # Blend overlay with original frame for translucency
+        alpha = 0.7  # Translucency factor (0.0 = fully transparent, 1.0 = fully opaque)
+        video_frame = cv2.addWeighted(overlay, alpha, video_frame, 1 - alpha, 0)
         
         # Create instruction panel
         instruction_panel = self._create_instruction_panel()

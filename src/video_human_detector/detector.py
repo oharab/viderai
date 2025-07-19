@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Callable
 import cv2
 import numpy as np
-from tqdm import tqdm
 from ultralytics import YOLO
 
 
@@ -315,53 +314,92 @@ class HumanDetector:
             duration: Duration of detection range
             
         Returns:
-            Annotated frame
+            Annotated frame with extended canvas for metadata
         """
-        annotated = frame.copy()
+        # Calculate metadata area height
+        metadata_height = 80  # Space for two lines of text plus padding
         
-        # Draw region rectangle
+        # Create extended canvas
+        original_height, original_width = frame.shape[:2]
+        extended_height = original_height + metadata_height
+        extended_frame = np.zeros((extended_height, original_width, 3), dtype=np.uint8)
+        
+        # Copy original frame to top of extended canvas
+        extended_frame[:original_height, :] = frame
+        
+        # Fill metadata area with dark background
+        extended_frame[original_height:, :] = (40, 40, 40)  # Dark gray
+        
+        # Create a translucent overlay for the region on the original frame area
+        overlay = extended_frame[:original_height, :].copy()
+        
+        # Draw region rectangle with thinner line
         cv2.rectangle(
-            annotated,
+            overlay,
             (region.x1, region.y1),
             (region.x2, region.y2),
             (0, 255, 0),  # Green
-            2
+            1  # Thinner line
         )
         
-        # Add timestamp and duration text
-        info_text = f"Time: {timestamp:.1f}s | Duration: {duration:.1f}s"
-        
-        # Text background
-        text_size = cv2.getTextSize(info_text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
-        cv2.rectangle(
-            annotated,
-            (10, 10),
-            (20 + text_size[0], 40 + text_size[1]),
-            (0, 0, 0),  # Black background
+        # Draw smaller, more subtle center point
+        cv2.circle(
+            overlay,
+            (region.center_x, region.center_y),
+            2,  # Smaller radius
+            (0, 255, 0),  # Green
             -1
         )
         
-        # Add text
+        # Add smaller corner markers
+        corner_size = 4
+        corners = [
+            (region.x1, region.y1),  # Top-left
+            (region.x2, region.y1),  # Top-right
+            (region.x1, region.y2),  # Bottom-left
+            (region.x2, region.y2),  # Bottom-right
+        ]
+        
+        for corner in corners:
+            cv2.rectangle(
+                overlay,
+                (corner[0] - corner_size//2, corner[1] - corner_size//2),
+                (corner[0] + corner_size//2, corner[1] + corner_size//2),
+                (0, 255, 0),  # Green
+                -1
+            )
+        
+        # Blend overlay with original frame area for translucency
+        alpha = 0.7  # Translucency factor
+        extended_frame[:original_height, :] = cv2.addWeighted(
+            overlay, alpha, extended_frame[:original_height, :], 1 - alpha, 0
+        )
+        
+        # Add metadata text in the bottom area
+        metadata_y_start = original_height + 25
+        
+        # Add timestamp and duration text
+        info_text = f"Time: {timestamp:.1f}s | Duration: {duration:.1f}s"
         cv2.putText(
-            annotated,
+            extended_frame,
             info_text,
-            (15, 35),
+            (15, metadata_y_start),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
+            0.6,
             (255, 255, 255),  # White text
             2
         )
         
-        # Add region info
+        # Add region info on second line
         region_text = f"Region: ({region.center_x}, {region.center_y}) {region.width}x{region.height}"
         cv2.putText(
-            annotated,
+            extended_frame,
             region_text,
-            (15, 65),
+            (15, metadata_y_start + 30),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.5,
-            (255, 255, 255),  # White text
+            (200, 200, 200),  # Light gray text
             1
         )
         
-        return annotated
+        return extended_frame

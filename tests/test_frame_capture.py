@@ -37,12 +37,14 @@ def test_annotate_frame():
     # Annotate the frame
     annotated = detector._annotate_frame(frame, region, timestamp=10.5, duration=7.2)
     
-    # Check that we got a frame back with same dimensions
-    assert annotated.shape == frame.shape
+    # Check that we got a frame back with extended dimensions (80px taller for metadata)
+    expected_height = frame.shape[0] + 80  # Original height + metadata area
+    assert annotated.shape == (expected_height, frame.shape[1], 3)
     assert annotated.dtype == frame.dtype
     
-    # Check that the frame was modified (not identical to original)
-    assert not np.array_equal(frame, annotated)
+    # Check that the original frame area was modified (region overlay added)
+    original_area = annotated[:frame.shape[0], :]
+    assert not np.array_equal(frame, original_area)
 
 
 def test_save_captured_frame(temp_output_dir):

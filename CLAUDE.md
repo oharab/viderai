@@ -64,7 +64,7 @@ uv run pytest --cov=video_human_detector
 
 **Interactive Region Selection**
 - **Side Panel Interface**: Video frame with unobstructed view + instruction panel
-- **Enhanced Visuals**: Region rectangle with corner markers for better visibility
+- **Subtle Visual Design**: Thin, translucent region overlay (70% opacity) with corner markers
 - **Movement**: Arrow keys to move region around frame
 - **Resize Both**: Z/X keys to resize both width and height simultaneously
 - **Width Only**: M/N keys to make region narrower/wider independently
@@ -78,7 +78,8 @@ uv run pytest --cov=video_human_detector
 - Automatically saves annotated frames when humans detected for extended periods
 - Configurable duration threshold before triggering frame capture
 - Selects middle frame from detection range for best representation
-- Saved frames include region overlay, timestamp, and duration information
+- Saved frames include subtle region overlay with extended canvas for metadata
+- Extended canvas design prevents metadata from obscuring video content
 - Supports custom output directories and automatic filename generation
 
 ### Data Flow
