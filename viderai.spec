@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['src/video_human_detector/main.py'],
+    ['src/viderai/main.py'],
     pathex=[],
     binaries=[],
     datas=[('yolov8n.pt', '.')],
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='video-human-detector',
+    name='viderai.exe',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

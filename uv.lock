@@ -1002,7 +1002,7 @@ wheels = [
 ]
 
 [[package]]
-name = "video-human-detector"
+name = "viderai"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

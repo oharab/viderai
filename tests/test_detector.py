@@ -3,7 +3,7 @@
 import logging
 import pytest
 import numpy as np
-from video_human_detector.detector import Region, Detection, HumanDetector, YOLODetector
+from viderai.detector import Region, Detection, HumanDetector, YOLODetector
 
 
 def test_region_properties():

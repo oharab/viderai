@@ -1,7 +1,7 @@
-"""Example usage of the video human detector."""
+"""Example usage of Viderai - AI-powered video analysis."""
 
-from video_human_detector import HumanDetector
-from video_human_detector.detector import Region, YOLODetector
+from viderai import HumanDetector
+from viderai.detector import Region, YOLODetector
 
 
 def main():
