@@ -10,10 +10,12 @@ from tqdm import tqdm
 
 from .detector import HumanDetector, YOLODetector, Region
 from .region_selector import select_region_interactively
+from . import __version__
 
 
 @click.command()
 @click.argument('video_path', type=click.Path(exists=True, path_type=Path))
+@click.version_option(version=__version__, prog_name="viderai")
 @click.option('--center-x', type=int, help='X coordinate of region center')
 @click.option('--center-y', type=int, help='Y coordinate of region center')
 @click.option('--width', type=int, help='Width of region in pixels')

@@ -1,6 +1,6 @@
 [project]
 name = "viderai"
-version = "0.1.0"
+dynamic = ["version"]
 description = "AI-powered video analysis tool for detecting humans in specified regions"
 readme = "README.md"
 authors = [
@@ -28,5 +28,11 @@ build = [
 viderai = "viderai:main"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatchling-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/viderai/_version.py"
