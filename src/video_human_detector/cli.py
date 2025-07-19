@@ -1,8 +1,12 @@
 """Command-line interface for video human detection."""
 
+import logging
+import sys
+from typing import Optional
+
 import click
 from pathlib import Path
-from typing import Optional
+from tqdm import tqdm
 
 from .detector import HumanDetector, YOLODetector, Region
 
@@ -17,6 +21,8 @@ from .detector import HumanDetector, YOLODetector, Region
 @click.option('--confidence', type=float, default=0.5, help='Detection confidence threshold (default: 0.5)')
 @click.option('--model', type=str, default='yolov8n.pt', help='YOLO model to use (default: yolov8n.pt)')
 @click.option('--output-format', type=click.Choice(['human', 'json']), default='human', help='Output format')
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
+@click.option('--quiet', '-q', is_flag=True, help='Suppress progress bar (useful for scripting)')
 def main(
     video_path: Path,
     center_x: int,
@@ -26,13 +32,18 @@ def main(
     frame_skip: int,
     confidence: float,
     model: str,
-    output_format: str
+    output_format: str,
+    verbose: bool,
+    quiet: bool
 ) -> None:
     """Detect humans in a specified region of a video file.
     
     VIDEO_PATH: Path to the video file to analyze
     """
     try:
+        # Configure logging
+        setup_logging(verbose)
+        
         # Create region of interest
         region = Region(center_x, center_y, width, height)
         
@@ -40,12 +51,34 @@ def main(
         yolo_detector = YOLODetector(model, confidence)
         detector = HumanDetector(yolo_detector)
         
-        # Analyze video
-        click.echo(f"Analyzing video: {video_path}")
-        click.echo(f"Region: center=({center_x}, {center_y}), size={width}x{height}")
-        click.echo(f"Frame skip: {frame_skip}, Confidence: {confidence}")
+        # Show initial info (unless quiet and json output)
+        if not (quiet and output_format == 'json'):
+            click.echo(f"Analyzing video: {video_path}")
+            click.echo(f"Region: center=({center_x}, {center_y}), size={width}x{height}")
+            click.echo(f"Frame skip: {frame_skip}, Confidence: {confidence}")
         
-        time_ranges = detector.analyze_video(str(video_path), region, frame_skip)
+        # Set up progress tracking
+        pbar = None
+        
+        def progress_callback(current_frame: int, total_frames: int) -> None:
+            nonlocal pbar
+            if not quiet:
+                if pbar is None:
+                    pbar = tqdm(total=total_frames, desc="Processing frames", unit="frame")
+                pbar.n = current_frame
+                pbar.refresh()
+        
+        # Analyze video with progress tracking
+        time_ranges = detector.analyze_video(
+            str(video_path), 
+            region, 
+            frame_skip,
+            progress_callback if not quiet else None
+        )
+        
+        # Close progress bar
+        if pbar:
+            pbar.close()
         
         # Output results
         if output_format == 'json':
@@ -76,6 +109,26 @@ def main(
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise click.Abort()
+
+
+def setup_logging(verbose: bool = False) -> None:
+    """Configure logging based on verbosity level."""
+    level = logging.DEBUG if verbose else logging.WARNING
+    
+    # Configure root logger to suppress most third-party logs
+    logging.basicConfig(
+        level=logging.WARNING,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[logging.StreamHandler(sys.stderr)]
+    )
+    
+    # Set our package logger to the desired level
+    logger = logging.getLogger('video_human_detector')
+    logger.setLevel(level)
+    
+    # Suppress ultralytics verbose output unless explicitly requested
+    if not verbose:
+        logging.getLogger('ultralytics').setLevel(logging.ERROR)
 
 
 if __name__ == '__main__':
