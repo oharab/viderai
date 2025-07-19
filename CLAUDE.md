@@ -41,6 +41,37 @@ uv run pytest tests/test_detector.py
 uv run pytest --cov=video_human_detector
 ```
 
+### Windows Packaging
+
+To create a standalone Windows executable that doesn't require Python installation:
+
+```bash
+# Install build dependencies
+uv sync --extra build
+
+# Create Windows executable using PyInstaller
+uv run pyinstaller video-human-detector.spec
+
+# The executable will be created in dist/video-human-detector/
+# Copy the entire dist/video-human-detector/ directory to Windows machines
+```
+
+**Alternative build script:**
+```bash
+# Use the automated build script
+python build_windows.py
+```
+
+**Package Contents:**
+- `dist/video-human-detector/video-human-detector.exe` - Main executable
+- `dist/video-human-detector/yolov8n.pt` - Bundled YOLO model
+- `dist/video-human-detector/_internal/` - Required libraries and dependencies
+
+**Distribution:**
+- Copy the entire `dist/video-human-detector/` directory to target Windows machines
+- No Python installation required on target machines
+- Executable size: ~20MB (single file) or distributed folder with dependencies
+
 ## Architecture
 
 ### Core Components
