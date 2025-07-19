@@ -1,0 +1,29 @@
+[project]
+name = "video-human-detector"
+version = "0.1.0"
+description = "CCTV video analysis tool for detecting humans in specified regions"
+readme = "README.md"
+authors = [
+    { name = "oharab", email = "64716+oharab@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "opencv-python>=4.8.0",
+    "ultralytics>=8.0.0",
+    "numpy>=1.24.0",
+    "click>=8.0.0",
+    "tqdm>=4.65.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.scripts]
+video-human-detector = "video_human_detector:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
