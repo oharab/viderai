@@ -132,3 +132,64 @@ def test_region_selector_resizing(sample_frame):
     selector._clamp_region()
     assert selector.region.width == original_width - selector.resize_step
     assert selector.region.height == original_height - selector.resize_step
+
+
+def test_region_selector_width_only_adjustment(sample_frame):
+    """Test that width-only adjustment works correctly."""
+    selector = InteractiveRegionSelector(sample_frame)
+    original_width = selector.region.width
+    original_height = selector.region.height
+    
+    # Simulate making width wider
+    selector.region.width += selector.resize_step
+    selector._clamp_region()
+    assert selector.region.width == original_width + selector.resize_step
+    assert selector.region.height == original_height  # Height unchanged
+    
+    # Simulate making width narrower
+    selector.region.width -= selector.resize_step * 2
+    selector._clamp_region()
+    assert selector.region.width == original_width - selector.resize_step
+    assert selector.region.height == original_height  # Height unchanged
+
+
+def test_region_selector_height_only_adjustment(sample_frame):
+    """Test that height-only adjustment works correctly."""
+    selector = InteractiveRegionSelector(sample_frame)
+    original_width = selector.region.width
+    original_height = selector.region.height
+    
+    # Simulate making height taller
+    selector.region.height += selector.resize_step
+    selector._clamp_region()
+    assert selector.region.width == original_width   # Width unchanged
+    assert selector.region.height == original_height + selector.resize_step
+    
+    # Simulate making height shorter
+    selector.region.height -= selector.resize_step * 2
+    selector._clamp_region()
+    assert selector.region.width == original_width   # Width unchanged
+    assert selector.region.height == original_height - selector.resize_step
+
+
+def test_region_selector_independent_dimensions(sample_frame):
+    """Test that width and height can be adjusted independently."""
+    selector = InteractiveRegionSelector(sample_frame)
+    original_width = selector.region.width
+    original_height = selector.region.height
+    
+    # Make width wider but height shorter
+    selector.region.width += selector.resize_step * 2
+    selector.region.height -= selector.resize_step
+    selector._clamp_region()
+    
+    assert selector.region.width == original_width + (selector.resize_step * 2)
+    assert selector.region.height == original_height - selector.resize_step
+    
+    # Make width narrower but height taller
+    selector.region.width -= selector.resize_step * 3
+    selector.region.height += selector.resize_step * 2
+    selector._clamp_region()
+    
+    assert selector.region.width == original_width - selector.resize_step
+    assert selector.region.height == original_height + selector.resize_step

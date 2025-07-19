@@ -64,7 +64,11 @@ uv run pytest --cov=video_human_detector
 
 **Interactive Region Selection**
 - Displays first frame of video with overlay showing current region
-- Controls: Arrow keys (move), Z/X keys (resize), Enter (confirm), Esc (cancel)
+- **Movement**: Arrow keys to move region around frame
+- **Resize Both**: Z/X keys to resize both width and height simultaneously
+- **Width Only**: M/N keys to make region narrower/wider independently
+- **Height Only**: H/J keys to make region shorter/taller independently
+- **Confirm/Cancel**: Enter to confirm, Esc to cancel selection
 - Supports starting with predefined region or default center placement
 - Real-time visual feedback with region coordinates and size display
 
