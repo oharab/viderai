@@ -62,8 +62,13 @@ jobs:
           echo "uv run viderai --help" >> release_notes.md
           echo '```' >> release_notes.md
           echo "" >> release_notes.md
-          echo "## Windows Users" >> release_notes.md
-          echo "Download the \`viderai-windows.zip\` file below for a standalone executable that doesn't require Python installation." >> release_notes.md
+          echo "## Platform Downloads" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "**Windows Users**: Download \`viderai-windows.zip\` for a standalone executable" >> release_notes.md
+          echo "**macOS Users**: Download \`viderai-macos.tar.gz\` for a standalone executable" >> release_notes.md  
+          echo "**Linux Users**: Download \`viderai-linux.tar.gz\` for a standalone executable" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "All executables are self-contained and don't require Python installation." >> release_notes.md
 
       - name: Create Release
         id: create_release
@@ -295,5 +300,135 @@ jobs:
       - name: Upload Linux Release Asset
         run: |
           gh release upload ${{ needs.create-release.outputs.tag_name }} viderai-linux.tar.gz --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos:
+    needs: create-release
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install dependencies
+        run: |
+          uv sync --extra build
+
+      # YOLO model removed - auto-downloaded on first use to comply with AGPL-3.0
+
+      - name: Build macOS executable
+        run: |
+          # Create macOS spec file if it doesn't exist
+          if [ ! -f "viderai-macos.spec" ]; then
+            cat > viderai-macos.spec << 'EOF'
+          # -*- mode: python ; coding: utf-8 -*-
+
+          block_cipher = None
+
+          a = Analysis(
+              ['src/viderai/main.py'],
+              pathex=[],
+              binaries=[],
+              datas=[],
+              hiddenimports=['ultralytics', 'cv2', 'numpy', 'click', 'tqdm'],
+              hookspath=[],
+              hooksconfig={},
+              runtime_hooks=[],
+              excludes=[],
+              win_no_prefer_redirects=False,
+              win_private_assemblies=False,
+              cipher=block_cipher,
+              noarchive=False,
+          )
+
+          pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+          exe = EXE(
+              pyz,
+              a.scripts,
+              a.binaries,
+              a.zipfiles,
+              a.datas,
+              [],
+              name='viderai',
+              debug=False,
+              bootloader_ignore_signals=False,
+              strip=False,
+              upx=True,
+              upx_exclude=[],
+              runtime_tmpdir=None,
+              console=True,
+              disable_windowed_traceback=False,
+              argv_emulation=False,
+              target_arch=None,
+              codesign_identity=None,
+              entitlements_file=None,
+          )
+          EOF
+          fi
+          
+          uv run pyinstaller viderai-macos.spec
+
+      - name: Create macOS release package
+        run: |
+          # Create release directory
+          mkdir viderai-macos
+          
+          # Copy executable and essential files
+          cp dist/viderai viderai-macos/
+          cp README.md viderai-macos/
+          
+          # Create usage instructions for macOS
+          cat > viderai-macos/MACOS_USAGE.txt << 'EOF'
+          # Viderai - macOS Standalone
+          
+          This package contains a standalone macOS executable for Viderai.
+          
+          ## Quick Start
+          
+          1. Make executable: chmod +x viderai
+          2. Run: ./viderai --help
+          3. Example: ./viderai video.mp4 --interactive
+          
+          Note: YOLO model will be automatically downloaded on first use (~6MB)
+          
+          ## Interactive Mode (Recommended)
+          ./viderai your-video.mp4 --interactive
+          
+          ## Manual Region Specification  
+          ./viderai your-video.mp4 --center-x 320 --center-y 240 --width 200 --height 150
+          
+          ## With Frame Capture
+          ./viderai your-video.mp4 --interactive --capture-frames --min-duration 5.0
+          
+          ## macOS Security Notes
+          - First run may require "Allow" in System Preferences > Security & Privacy
+          - Right-click and "Open" if macOS blocks unsigned executables
+          - Camera/microphone permissions may be requested for video processing
+          
+          ## Requirements
+          - macOS 10.14+ (Mojave or later)
+          - No Python installation required
+          - GUI frameworks included for interactive mode
+          
+          For full documentation, see: https://github.com/oharab/viderai
+          EOF
+          
+          # Create tar.gz file
+          tar -czf viderai-macos.tar.gz -C viderai-macos .
+
+      - name: Upload macOS Release Asset
+        run: |
+          gh release upload ${{ needs.create-release.outputs.tag_name }} viderai-macos.tar.gz --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
