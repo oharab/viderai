@@ -16,8 +16,11 @@ uv sync --extra dev
 # Run the CLI tool with manual region specification
 uv run video-human-detector VIDEO_PATH --center-x X --center-y Y --width W --height H
 
-# Run with interactive region selection (NEW FEATURE)
+# Run with interactive region selection
 uv run video-human-detector VIDEO_PATH --interactive
+
+# Run with frame capture for extended detections (NEW FEATURE)
+uv run video-human-detector VIDEO_PATH --interactive --capture-frames --min-duration 10.0 --output-dir surveillance_frames
 
 # Run with verbose logging
 uv run video-human-detector VIDEO_PATH --center-x X --center-y Y --width W --height H --verbose
@@ -65,11 +68,19 @@ uv run pytest --cov=video_human_detector
 - Supports starting with predefined region or default center placement
 - Real-time visual feedback with region coordinates and size display
 
+**Frame Capture System**
+- Automatically saves annotated frames when humans detected for extended periods
+- Configurable duration threshold before triggering frame capture
+- Selects middle frame from detection range for best representation
+- Saved frames include region overlay, timestamp, and duration information
+- Supports custom output directories and automatic filename generation
+
 ### Data Flow
 1. Video frames → DetectorBase.detect_humans() → List[Detection]
 2. Detections filtered by Region.overlaps_with_region()
 3. Continuous human presence tracked across frames
-4. Output as TimeRange objects with start/end timestamps
+4. Frame capture triggered for extended detections (if enabled)
+5. Output as TimeRange objects with start/end timestamps and optional captured frame paths
 
 ### CLI vs Library Usage
 - **CLI**: Uses Click framework with progress bars (tqdm) and configurable logging
@@ -89,6 +100,9 @@ uv run pytest --cov=video_human_detector
 - **YOLO Model**: Different model sizes available (nano/small/medium/large via `--model` or YOLODetector constructor)
 - **Output Format**: Human-readable or JSON (CLI: `--output-format`)
 - **Interactive Mode**: Visual region selection (CLI: `--interactive/-i`)
+- **Frame Capture**: Save frames for extended detections (CLI: `--capture-frames`, API: `capture_frames` parameter)
+- **Capture Duration**: Minimum duration before frame capture (CLI: `--min-duration`, API: `min_duration_for_capture` parameter)
+- **Output Directory**: Custom directory for captured frames (CLI: `--output-dir`, API: `output_dir` parameter)
 
 ## Extension Points
 

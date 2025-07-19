@@ -23,6 +23,9 @@ from .region_selector import select_region_interactively
 @click.option('--confidence', type=float, default=0.5, help='Detection confidence threshold (default: 0.5)')
 @click.option('--model', type=str, default='yolov8n.pt', help='YOLO model to use (default: yolov8n.pt)')
 @click.option('--output-format', type=click.Choice(['human', 'json']), default='human', help='Output format')
+@click.option('--capture-frames', is_flag=True, help='Save frames when humans detected for extended periods')
+@click.option('--min-duration', type=float, default=5.0, help='Minimum duration (seconds) before capturing frames (default: 5.0)')
+@click.option('--output-dir', type=str, help='Directory to save captured frames (default: captures)')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 @click.option('--quiet', '-q', is_flag=True, help='Suppress progress bar (useful for scripting)')
 def main(
@@ -36,6 +39,9 @@ def main(
     confidence: float,
     model: str,
     output_format: str,
+    capture_frames: bool,
+    min_duration: float,
+    output_dir: Optional[str],
     verbose: bool,
     quiet: bool
 ) -> None:
@@ -85,6 +91,9 @@ def main(
             click.echo(f"Analyzing video: {video_path}")
             click.echo(f"Region: center=({region.center_x}, {region.center_y}), size={region.width}x{region.height}")
             click.echo(f"Frame skip: {frame_skip}, Confidence: {confidence}")
+            if capture_frames:
+                output_location = output_dir or "captures"
+                click.echo(f"Frame capture enabled: min duration {min_duration}s, output: {output_location}")
         
         # Set up progress tracking
         pbar = None
@@ -102,7 +111,10 @@ def main(
             str(video_path), 
             region, 
             frame_skip,
-            progress_callback if not quiet else None
+            progress_callback if not quiet else None,
+            capture_frames,
+            min_duration,
+            output_dir
         )
         
         # Close progress bar
@@ -121,7 +133,12 @@ def main(
                     'height': region.height
                 },
                 'time_ranges': [
-                    {'start': tr.start_time, 'end': tr.end_time}
+                    {
+                        'start': tr.start_time, 
+                        'end': tr.end_time,
+                        'duration': tr.duration,
+                        'captured_frame': tr.captured_frame_path
+                    }
                     for tr in time_ranges
                 ]
             }
@@ -130,8 +147,11 @@ def main(
             if time_ranges:
                 click.echo(f"\nHuman detected in region during {len(time_ranges)} time range(s):")
                 for i, tr in enumerate(time_ranges, 1):
-                    duration = tr.end_time - tr.start_time
-                    click.echo(f"  {i}. {tr.start_time:.2f}s - {tr.end_time:.2f}s (duration: {duration:.2f}s)")
+                    duration = tr.duration
+                    output_line = f"  {i}. {tr.start_time:.2f}s - {tr.end_time:.2f}s (duration: {duration:.2f}s)"
+                    if tr.captured_frame_path:
+                        output_line += f" [Frame saved: {tr.captured_frame_path}]"
+                    click.echo(output_line)
             else:
                 click.echo("\nNo humans detected in the specified region.")
     
