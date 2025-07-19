@@ -63,14 +63,19 @@ python build_windows.py
 ```
 
 **Package Contents:**
-- `dist/video-human-detector/video-human-detector.exe` - Main executable
-- `dist/video-human-detector/yolov8n.pt` - Bundled YOLO model
-- `dist/video-human-detector/_internal/` - Required libraries and dependencies
+- `dist/video-human-detector.exe` - Standalone Windows executable (single file)
+- OR `dist/video-human-detector/` - Directory distribution with executable and dependencies
 
 **Distribution:**
-- Copy the entire `dist/video-human-detector/` directory to target Windows machines
+- Single file: Copy `video-human-detector.exe` to target Windows machines
+- Directory: Copy the entire `dist/video-human-detector/` directory to Windows machines  
 - No Python installation required on target machines
-- Executable size: ~20MB (single file) or distributed folder with dependencies
+- Executable size: ~100-200MB (includes PyTorch and OpenCV dependencies)
+
+**Fixed Issues:**
+- ✅ Spec file now correctly generates `.exe` extension
+- ✅ Fixed module import issues with robust fallback imports
+- ✅ Supports both single-file and directory distribution modes
 
 ## Architecture
 
