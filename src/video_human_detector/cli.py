@@ -61,7 +61,7 @@ def main(
         if interactive:
             if not quiet:
                 click.echo("Starting interactive region selection...")
-                click.echo("Controls: Arrow keys (move), Z/X (resize), Enter (confirm), Esc (cancel)")
+                click.echo("Controls: Arrow keys (move), Z/X (resize both), M/N (width), H/J (height), Enter (confirm), Esc (cancel)")
             
             # Use interactive selection
             initial_region = None

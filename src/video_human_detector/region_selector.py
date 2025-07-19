@@ -80,7 +80,9 @@ class InteractiveRegionSelector:
         # Draw instructions
         instructions = [
             "Arrow Keys: Move region",
-            "Z/X: Resize smaller/larger", 
+            "Z/X: Resize both smaller/larger",
+            "M/N: Width narrower/wider",
+            "H/J: Height shorter/taller", 
             "Enter: Confirm",
             "Esc: Cancel",
             f"Region: ({self.region.center_x}, {self.region.center_y}) {self.region.width}x{self.region.height}"
@@ -158,14 +160,32 @@ class InteractiveRegionSelector:
                 self.region.center_x += self.move_step
                 self._clamp_region()
                 
-            # Size adjustment
-            elif key == ord('z') or key == ord('Z'):  # Smaller
+            # Size adjustment - both dimensions
+            elif key == ord('z') or key == ord('Z'):  # Both smaller
                 self.region.width = max(self.min_size, self.region.width - self.resize_step)
                 self.region.height = max(self.min_size, self.region.height - self.resize_step)
                 self._clamp_region()
                 
-            elif key == ord('x') or key == ord('X'):  # Larger
+            elif key == ord('x') or key == ord('X'):  # Both larger
                 self.region.width += self.resize_step
+                self.region.height += self.resize_step
+                self._clamp_region()
+                
+            # Width adjustment only
+            elif key == ord('m') or key == ord('M'):  # Width narrower
+                self.region.width = max(self.min_size, self.region.width - self.resize_step)
+                self._clamp_region()
+                
+            elif key == ord('n') or key == ord('N'):  # Width wider
+                self.region.width += self.resize_step
+                self._clamp_region()
+                
+            # Height adjustment only
+            elif key == ord('h') or key == ord('H'):  # Height shorter
+                self.region.height = max(self.min_size, self.region.height - self.resize_step)
+                self._clamp_region()
+                
+            elif key == ord('j') or key == ord('J'):  # Height taller
                 self.region.height += self.resize_step
                 self._clamp_region()
 
