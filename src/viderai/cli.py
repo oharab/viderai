@@ -10,7 +10,19 @@ from tqdm import tqdm
 
 from .detector import HumanDetector, YOLODetector, Region
 from .region_selector import select_region_interactively
-from . import __version__
+
+# Get version directly to avoid circular import
+try:
+    from ._version import __version__
+except ImportError:
+    try:
+        from importlib.metadata import version, PackageNotFoundError
+        try:
+            __version__ = version("viderai")
+        except PackageNotFoundError:
+            __version__ = "dev"
+    except ImportError:
+        __version__ = "dev"
 
 
 @click.command()

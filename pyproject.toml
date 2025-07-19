@@ -28,7 +28,7 @@ build = [
 viderai = "viderai:main"
 
 [build-system]
-requires = ["hatchling", "hatchling-vcs"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]

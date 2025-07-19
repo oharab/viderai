@@ -1003,7 +1003,6 @@ wheels = [
 
 [[package]]
 name = "viderai"
-version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -1033,4 +1032,4 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.65.0" },
     { name = "ultralytics", specifier = ">=8.0.0" },
 ]
-provides-extras = ["dev", "build"]
+provides-extras = ["build", "dev"]
