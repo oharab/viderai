@@ -5,7 +5,7 @@ a = Analysis(
     ['src/viderai/main.py'],
     pathex=[],
     binaries=[],
-    datas=[('yolov8n.pt', '.')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

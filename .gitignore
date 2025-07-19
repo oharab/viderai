@@ -62,3 +62,7 @@ Thumbs.db
 runs/
 weights/
 captures/
+
+# YOLO model files (auto-downloaded, don't distribute due to AGPL-3.0)
+*.pt
+yolov8*.pt

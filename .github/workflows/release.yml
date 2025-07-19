@@ -1,0 +1,287 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      tag_name: ${{ steps.get_version.outputs.tag_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          # Generate release notes from commit messages
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "## Changes since $PREVIOUS_TAG" > release_notes.md
+            echo "" >> release_notes.md
+            git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD >> release_notes.md
+          else
+            echo "## Initial Release" > release_notes.md
+            echo "" >> release_notes.md
+            echo "First stable release of Viderai - AI-powered video analysis for human detection." >> release_notes.md
+            echo "" >> release_notes.md
+            echo "### Key Features:" >> release_notes.md
+            echo "- 🎯 Precise region monitoring with pixel-perfect accuracy" >> release_notes.md
+            echo "- 🖱️ Interactive region selection with visual interface" >> release_notes.md
+            echo "- ⚡ Real-time YOLO detection with configurable frame skipping" >> release_notes.md
+            echo "- 📸 Automated frame capture for extended detections" >> release_notes.md
+            echo "- 🌐 Cross-platform support (Windows, macOS, Linux)" >> release_notes.md
+            echo "- 📦 Standalone Windows executables" >> release_notes.md
+          fi
+          
+          echo "" >> release_notes.md
+          echo "## Installation" >> release_notes.md
+          echo "" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "# Using uv (recommended)" >> release_notes.md
+          echo "git clone https://github.com/oharab/viderai.git" >> release_notes.md
+          echo "cd viderai" >> release_notes.md
+          echo "uv sync" >> release_notes.md
+          echo "uv run viderai --help" >> release_notes.md
+          echo '```' >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Windows Users" >> release_notes.md
+          echo "Download the \`viderai-windows.zip\` file below for a standalone executable that doesn't require Python installation." >> release_notes.md
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          release_name: Viderai ${{ steps.get_version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+
+  build-windows:
+    needs: create-release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install dependencies
+        run: |
+          uv sync --extra build
+
+      # YOLO model removed - auto-downloaded on first use to comply with AGPL-3.0
+
+      - name: Build Windows executable
+        run: |
+          uv run pyinstaller viderai.spec
+
+      - name: Create Windows release package
+        run: |
+          # Create release directory
+          mkdir viderai-windows
+          
+          # Copy executable and essential files
+          Copy-Item "dist\viderai.exe" "viderai-windows\"
+          Copy-Item "README.md" "viderai-windows\"
+          
+          # Create usage instructions for Windows
+          @"
+          # Viderai - Windows Standalone
+          
+          This package contains a standalone Windows executable for Viderai.
+          
+          ## Quick Start
+          
+          1. Open Command Prompt or PowerShell in this directory
+          2. Run: viderai.exe --help
+          3. Example: viderai.exe video.mp4 --interactive
+          
+          Note: YOLO model will be automatically downloaded on first use (~6MB)
+          
+          ## Interactive Mode (Recommended)
+          viderai.exe your-video.mp4 --interactive
+          
+          ## Manual Region Specification  
+          viderai.exe your-video.mp4 --center-x 320 --center-y 240 --width 200 --height 150
+          
+          ## With Frame Capture
+          viderai.exe your-video.mp4 --interactive --capture-frames --min-duration 5.0
+          
+          For full documentation, see: https://github.com/oharab/viderai
+          "@ | Out-File -FilePath "viderai-windows\WINDOWS_USAGE.txt" -Encoding UTF8
+          
+          # Create zip file
+          Compress-Archive -Path "viderai-windows\*" -DestinationPath "viderai-windows.zip"
+
+      - name: Upload Windows Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: viderai-windows.zip
+          asset_name: viderai-windows-${{ needs.create-release.outputs.tag_name }}.zip
+          asset_content_type: application/zip
+
+  build-linux:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1
+
+      - name: Install dependencies
+        run: |
+          uv sync --extra build
+
+      # YOLO model removed - auto-downloaded on first use to comply with AGPL-3.0
+
+      - name: Build Linux executable
+        run: |
+          # Create Linux spec file if it doesn't exist
+          if [ ! -f "viderai-linux.spec" ]; then
+            cat > viderai-linux.spec << 'EOF'
+          # -*- mode: python ; coding: utf-8 -*-
+
+          block_cipher = None
+
+          a = Analysis(
+              ['src/viderai/main.py'],
+              pathex=[],
+              binaries=[],
+              datas=[],
+              hiddenimports=['ultralytics', 'cv2', 'numpy', 'click', 'tqdm'],
+              hookspath=[],
+              hooksconfig={},
+              runtime_hooks=[],
+              excludes=[],
+              win_no_prefer_redirects=False,
+              win_private_assemblies=False,
+              cipher=block_cipher,
+              noarchive=False,
+          )
+
+          pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+          exe = EXE(
+              pyz,
+              a.scripts,
+              a.binaries,
+              a.zipfiles,
+              a.datas,
+              [],
+              name='viderai',
+              debug=False,
+              bootloader_ignore_signals=False,
+              strip=False,
+              upx=True,
+              upx_exclude=[],
+              runtime_tmpdir=None,
+              console=True,
+              disable_windowed_traceback=False,
+              argv_emulation=False,
+              target_arch=None,
+              codesign_identity=None,
+              entitlements_file=None,
+          )
+          EOF
+          fi
+          
+          uv run pyinstaller viderai-linux.spec
+
+      - name: Create Linux release package
+        run: |
+          # Create release directory
+          mkdir viderai-linux
+          
+          # Copy executable and essential files
+          cp dist/viderai viderai-linux/
+          cp README.md viderai-linux/
+          
+          # Create usage instructions for Linux
+          cat > viderai-linux/LINUX_USAGE.txt << 'EOF'
+          # Viderai - Linux Standalone
+          
+          This package contains a standalone Linux executable for Viderai.
+          
+          ## Quick Start
+          
+          1. Make executable: chmod +x viderai
+          2. Run: ./viderai --help
+          3. Example: ./viderai video.mp4 --interactive
+          
+          Note: YOLO model will be automatically downloaded on first use (~6MB)
+          
+          ## Interactive Mode (Recommended)
+          ./viderai your-video.mp4 --interactive
+          
+          ## Manual Region Specification  
+          ./viderai your-video.mp4 --center-x 320 --center-y 240 --width 200 --height 150
+          
+          ## With Frame Capture
+          ./viderai your-video.mp4 --interactive --capture-frames --min-duration 5.0
+          
+          ## Requirements
+          - No Python installation required
+          - GUI libraries should be available for interactive mode
+          - Tested on Ubuntu 20.04+ and similar distributions
+          
+          For full documentation, see: https://github.com/oharab/viderai
+          EOF
+          
+          # Create tar.gz file
+          tar -czf viderai-linux.tar.gz -C viderai-linux .
+
+      - name: Upload Linux Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: viderai-linux.tar.gz
+          asset_name: viderai-linux-${{ needs.create-release.outputs.tag_name }.tar.gz
+          asset_content_type: application/gzip
