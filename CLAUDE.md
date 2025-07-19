@@ -63,14 +63,16 @@ uv run pytest --cov=video_human_detector
 - **InteractiveRegionSelector**: Visual region selection using OpenCV with keyboard controls
 
 **Interactive Region Selection**
-- Displays first frame of video with overlay showing current region
+- **Side Panel Interface**: Video frame with unobstructed view + instruction panel
+- **Enhanced Visuals**: Region rectangle with corner markers for better visibility
 - **Movement**: Arrow keys to move region around frame
 - **Resize Both**: Z/X keys to resize both width and height simultaneously
 - **Width Only**: M/N keys to make region narrower/wider independently
 - **Height Only**: H/J keys to make region shorter/taller independently
 - **Confirm/Cancel**: Enter to confirm, Esc to cancel selection
+- **Real-time Feedback**: Live region coordinates, size, and area display
+- **Color-coded Instructions**: Clear visual hierarchy in side panel
 - Supports starting with predefined region or default center placement
-- Real-time visual feedback with region coordinates and size display
 
 **Frame Capture System**
 - Automatically saves annotated frames when humans detected for extended periods

@@ -62,9 +62,24 @@ def test_draw_region(sample_frame):
     selector = InteractiveRegionSelector(sample_frame)
     display_frame = selector._draw_region()
     
-    # Check that we got a frame back with the same dimensions
-    assert display_frame.shape == sample_frame.shape
+    # Check that we got a frame back with side panel (video width + panel width)
+    expected_height = sample_frame.shape[0]  # Same height
+    expected_width = sample_frame.shape[1] + 300  # Video width + panel width
+    assert display_frame.shape == (expected_height, expected_width, 3)
     assert display_frame.dtype == sample_frame.dtype
+
+
+def test_instruction_panel_creation(sample_frame):
+    """Test instruction panel creation."""
+    selector = InteractiveRegionSelector(sample_frame)
+    panel = selector._create_instruction_panel()
+    
+    # Check panel dimensions
+    assert panel.shape == (sample_frame.shape[0], 300, 3)  # Height matches frame, width is 300
+    assert panel.dtype == sample_frame.dtype
+    
+    # Check that panel is not entirely black (has content)
+    assert not np.all(panel == 0)
 
 
 @patch('cv2.VideoCapture')
