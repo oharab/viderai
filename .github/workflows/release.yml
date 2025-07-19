@@ -67,15 +67,15 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        run: |
+          gh release create ${{ steps.get_version.outputs.tag_name }} \
+            --title "Viderai ${{ steps.get_version.outputs.version }}" \
+            --notes-file release_notes.md
+          
+          # Get upload URL for artifacts
+          echo "upload_url=$(gh api repos/${{ github.repository }}/releases/tags/${{ steps.get_version.outputs.tag_name }} --jq .upload_url)" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.get_version.outputs.tag_name }}
-          release_name: Viderai ${{ steps.get_version.outputs.version }}
-          body_path: release_notes.md
-          draft: false
-          prerelease: false
 
   build-windows:
     needs: create-release
@@ -143,14 +143,10 @@ jobs:
           Compress-Archive -Path "viderai-windows\*" -DestinationPath "viderai-windows.zip"
 
       - name: Upload Windows Release Asset
-        uses: actions/upload-release-asset@v1
+        run: |
+          gh release upload ${{ needs.create-release.outputs.tag_name }} viderai-windows.zip --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: viderai-windows.zip
-          asset_name: viderai-windows-${{ needs.create-release.outputs.tag_name }}.zip
-          asset_content_type: application/zip
 
   build-linux:
     needs: create-release
@@ -277,11 +273,7 @@ jobs:
           tar -czf viderai-linux.tar.gz -C viderai-linux .
 
       - name: Upload Linux Release Asset
-        uses: actions/upload-release-asset@v1
+        run: |
+          gh release upload ${{ needs.create-release.outputs.tag_name }} viderai-linux.tar.gz --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: viderai-linux.tar.gz
-          asset_name: viderai-linux-${{ needs.create-release.outputs.tag_name }.tar.gz
-          asset_content_type: application/gzip
