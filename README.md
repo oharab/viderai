@@ -15,8 +15,8 @@ Viderai is a modern, efficient tool for detecting human presence in specified re
 - **⚡ Real-Time Performance** - Optimized YOLO detection with configurable frame skipping
 - **📸 Automated Frame Capture** - Save annotated frames when humans are detected for extended periods
 - **⚙️ Flexible Configuration** - Adjustable confidence thresholds, models, and output formats
-- **🌐 Cross-Platform** - Works on Windows, macOS, and Linux
-- **📦 Standalone Executables** - No Python installation required on target machines
+- **🌐 Cross-Platform** - Works on Windows, macOS, and Linux (source install)
+- **📦 Standalone Executables** - Available for Windows and macOS
 - **🔒 Security-Focused** - Designed for legitimate surveillance and security applications
 
 ## 🚀 Quick Start
@@ -172,19 +172,30 @@ uv run viderai video.mp4 --interactive --capture-frames --min-duration 10.0
 uv run viderai video.mp4 --interactive --capture-frames --output-dir surveillance_frames
 ```
 
-## 🪟 Windows Deployment
+## 📦 Platform Support
 
-Create standalone executables for Windows deployment:
+### Windows & macOS
+Standalone executables are automatically built and available in GitHub releases:
+- **Windows**: Download `viderai-windows.zip` 
+- **macOS**: Download `viderai-macos.tar.gz`
+
+Both are self-contained and require no Python installation.
+
+### Linux
+Use the source installation method:
 
 ```bash
-# Install build dependencies
-uv sync --extra build
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Build Windows executable
-uv run pyinstaller viderai.spec
-
-# Result: dist/viderai.exe (standalone, no Python required)
+# Clone and install
+git clone https://github.com/oharab/viderai.git
+cd viderai
+uv sync
+uv run viderai --help
 ```
+
+**Note**: Linux standalone binaries exceed GitHub's size limits due to PyTorch dependencies.
 
 ## 🧪 Testing
 
